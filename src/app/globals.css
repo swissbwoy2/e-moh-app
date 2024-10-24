@@ -2,20 +2,276 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --ring: 215 20.2% 65.1%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+ 
+    --ring: 217.2 32.6% 17.5%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    height: 100%;
+    @apply antialiased;
+  }
+
+  body {
+    height: 100%;
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Modern Loading Spinner */
+  .loading-spinner {
+    @apply relative w-10 h-10;
+  }
+
+  .loading-spinner div {
+    @apply box-border block absolute w-8 h-8 m-1 border-4 border-t-transparent border-solid rounded-full animate-spin;
+    border-color: rgb(var(--primary) / 0.8) transparent transparent transparent;
+  }
+
+  /* Modern Button */
+  .btn-modern {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors 
+    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50
+    relative overflow-hidden transition-all duration-500;
+  }
+
+  .btn-modern::after {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-full bg-white opacity-0 transition-opacity duration-500;
+  }
+
+  .btn-modern:hover::after {
+    @apply opacity-20;
+  }
+
+  /* Card with Hover Effect */
+  .modern-card {
+    @apply relative rounded-lg bg-card text-card-foreground shadow-md 
+    transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Input with Modern Style */
+  .modern-input {
+    @apply flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm
+    transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium 
+    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+    disabled:cursor-not-allowed disabled:opacity-50
+    placeholder:text-muted-foreground;
+  }
+
+  /* Modern Form Label */
+  .modern-label {
+    @apply text-sm font-medium leading-none text-primary mb-2
+    peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  }
+
+  /* Animated Navigation Link */
+  .nav-link {
+    @apply relative text-primary no-underline;
+  }
+
+  .nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
+  }
+
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+
+  /* Modern Alert */
+  .modern-alert {
+    @apply relative w-full rounded-lg border p-4;
+  }
+
+  /* Notification Badge */
+  .notification-badge {
+    @apply absolute -right-1 -top-1 h-5 w-5 rounded-full bg-destructive flex items-center justify-center;
+  }
+
+  .notification-badge span {
+    @apply text-xs font-bold text-destructive-foreground;
+  }
+
+  /* Modern Scrollbar */
+  .modern-scroll {
+    @apply overflow-auto;
+  }
+
+  /* Modern Table */
+  .modern-table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .modern-table th {
+    @apply h-10 px-2 text-left align-middle font-medium text-muted-foreground;
+  }
+
+  .modern-table td {
+    @apply p-2 align-middle;
+  }
+
+  /* Modern Progress Bar */
+  .modern-progress {
+    @apply relative h-2 w-full overflow-hidden rounded-full bg-secondary;
+  }
+
+  .modern-progress div {
+    @apply h-full w-full flex-1 bg-primary transition-all;
+  }
+
+  /* Modern Dialog */
+  .modern-dialog {
+    @apply fixed inset-0 z-50 bg-background/80 backdrop-blur-sm;
+  }
+
+  .modern-dialog-content {
+    @apply fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border 
+    bg-background p-6 shadow-lg duration-200 sm:rounded-lg;
+  }
+
+  /* Modern Form */
+  .modern-form {
+    @apply space-y-6;
+  }
+
+  .modern-form-group {
+    @apply space-y-2;
+  }
+
+  .modern-form-description {
+    @apply text-[0.8rem] text-muted-foreground;
+  }
+
+  /* Modern Badge */
+  .modern-badge {
+    @apply inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors
+    focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  /* Modern Avatar */
+  .modern-avatar {
+    @apply relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full;
+  }
+
+  .modern-avatar-image {
+    @apply aspect-square h-full w-full;
+  }
+
+  .modern-avatar-fallback {
+    @apply flex h-full w-full items-center justify-center rounded-full bg-muted;
+  }
+
+  /* Modern Command Menu */
+  .modern-command {
+    @apply flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground;
+  }
+
+  .modern-command-input {
+    @apply flex items-center border-b px-3;
+  }
+
+  .modern-command-list {
+    @apply max-h-[300px] overflow-y-auto overflow-x-hidden;
+  }
+
+  .modern-command-empty {
+    @apply py-6 text-center text-sm;
+  }
+
+  .modern-command-group {
+    @apply overflow-hidden p-1 text-foreground;
+  }
+
+  .modern-command-item {
+    @apply relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none
+    aria-selected:bg-accent aria-selected:text-accent-foreground;
+  }
+
+  /* Modern Skeleton Loading */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-muted;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
 }

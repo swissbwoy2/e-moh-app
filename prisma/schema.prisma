@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+  CLIENT
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  role          UserRole  @default(CLIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  profile       Profile?
+  documents     Document[]
+  messages      Message[]
+  visits        Visit[]
+  assignedAgent Agent?    @relation("ClientToAgent", fields: [agentId], references: [id])
+  agentId       String?
+  agentProfile  Agent?    @relation("UserToAgent")
+  
+  @@map("users")
+}
+
+model Profile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  firstName      String
+  lastName       String
+  phone          String?
+  subscriptionId String?
+  subscriptionEndDate DateTime?
+  searchCriteria Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Agent {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation("UserToAgent", fields: [userId], references: [id])
+  clients     User[]    @relation("ClientToAgent")
+  visits      Visit[]
+  messages    Message[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("agents")
+}
+
+model Document {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  type        String
+  status      DocumentStatus @default(PENDING)
+  url         String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("documents")
+}
+
+model Visit {
+  id          String   @id @default(uuid())
+  propertyId  String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id])
+  datetime    DateTime
+  status      String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("visits")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("messages")
+}
