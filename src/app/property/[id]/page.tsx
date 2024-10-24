@@ -5,9 +5,9 @@ import { Property } from '@/types';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPropertyDetails } from '@/services/flatfox';
-import { getFacebookListing } from '@/services/facebook';
-import { getHomegateDetails } from '@/services/homegate';
+import { getPropertyById } from '@/services/flatfox';
+import { getMarketplaceListing } from '@/services/facebook';
+import { searchProperties } from '@/services/homegate';
 
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [property, setProperty] = useState<Property | null>(null);
@@ -25,13 +25,17 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
         switch (source) {
           case 'flatfox':
-            propertyData = await getPropertyDetails(sourceId);
+            propertyData = await getPropertyById(sourceId);
             break;
           case 'facebook':
-            propertyData = await getFacebookListing(sourceId);
+            propertyData = await getMarketplaceListing(sourceId);
             break;
           case 'homegate':
-            propertyData = await getHomegateDetails(sourceId);
+            const properties = await searchProperties();
+            propertyData = properties.find(p => p.id === sourceId);
+            if (!propertyData) {
+              throw new Error('Property not found');
+            }
             break;
           default:
             throw new Error('Unknown property source');
