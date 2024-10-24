@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react';
 import { collection, query, getDocs, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase/config';
+import type { User } from '@/types';
+
+interface UserWithId extends User {
+  id: string;
+}
 
 export const UsersList = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<UserWithId[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const usersSnapshot = await getDocs(collection(db, 'users'));
-        const usersData = usersSnapshot.docs.map(doc => ({
+        const usersData: UserWithId[] = usersSnapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
+          createdAt: doc.data().createdAt.toDate(),
+          lastLogin: doc.data().lastLogin.toDate(),
+          subscriptionEndDate: doc.data().subscriptionEndDate?.toDate(),
         }));
         setUsers(usersData);
       } catch (error) {
@@ -25,12 +33,12 @@ export const UsersList = () => {
     fetchUsers();
   }, []);
 
-  const handleUpdateRole = async (userId: string, newRole: string) => {
+  const handleUpdateRole = async (userId: string, newRole: 'admin' | 'agent' | 'client') => {
     try {
       await updateDoc(doc(db, 'users', userId), {
         role: newRole
       });
-      // Mettre à jour l'état local
+      // Update local state
       setUsers(users.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       ));
@@ -78,7 +86,7 @@ export const UsersList = () => {
                   {users.map((user) => (
                     <tr key={user.id}>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                        {user.firstName} {user.lastName}
+                        {user.displayName || user.email}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {user.email}
@@ -86,18 +94,18 @@ export const UsersList = () => {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <select
                           value={user.role}
-                          onChange={(e) => handleUpdateRole(user.id, e.target.value)}
+                          onChange={(e) => handleUpdateRole(user.id, e.target.value as 'admin' | 'agent' | 'client')}
                           className="rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                         >
-                          <option value="CLIENT">Client</option>
-                          <option value="AGENT">Agent</option>
-                          <option value="ADMIN">Admin</option>
+                          <option value="client">Client</option>
+                          <option value="agent">Agent</option>
+                          <option value="admin">Admin</option>
                         </select>
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button
                           className="text-indigo-600 hover:text-indigo-900"
-                          onClick={() => {/* Ajouter la logique de détails */}}
+                          onClick={() => {/* Add details logic */}}
                         >
                           Voir détails
                         </button>
