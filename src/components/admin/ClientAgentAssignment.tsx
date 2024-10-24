@@ -8,6 +8,7 @@ import {
   getDocs,
   updateDoc,
   doc,
+  addDoc,
 } from 'firebase/firestore';
 
 export const ClientAgentAssignment: React.FC = () => {
