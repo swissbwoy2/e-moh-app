@@ -5,6 +5,8 @@ export interface User {
   role: 'admin' | 'agent' | 'client';
   displayName?: string;
   photoURL?: string;
+  phone?: string;
+  address?: string;
   createdAt: Date;
   lastLogin: Date;
   subscriptionStatus?: 'active' | 'expired' | 'none';
