@@ -29,10 +29,21 @@ export const ManageSearchMandate: React.FC = () => {
     const unsubscribe = onSnapshot(
       mandatesQuery,
       (snapshot) => {
-        const mandatesList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as SearchMandate[];
+        const mandatesList = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            birthDate: data.birthDate?.toDate(),
+            livingAtCurrentAddressSince: data.livingAtCurrentAddressSince?.toDate(),
+            employmentStartDate: data.employmentStartDate?.toDate(),
+            createdAt: data.createdAt?.toDate(),
+            updatedAt: data.updatedAt?.toDate(),
+            termsAcceptanceDate: data.termsAcceptanceDate?.toDate(),
+            activationDate: data.activationDate?.toDate(),
+            expiryDate: data.expiryDate?.toDate(),
+          } as SearchMandate;
+        });
         setMandates(mandatesList);
         setLoading(false);
       },
@@ -106,7 +117,7 @@ export const ManageSearchMandate: React.FC = () => {
               </h3>
               <p className="text-sm text-gray-600">{mandate.email}</p>
               <p className="text-sm text-gray-600">
-                Submitted: {new Date(mandate.createdAt).toLocaleDateString()}
+                Submitted: {mandate.createdAt.toLocaleDateString()}
               </p>
             </div>
 
