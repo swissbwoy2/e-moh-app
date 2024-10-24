@@ -2,19 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../../../lib/firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
+import type { Visit } from '@/types';
 
-interface Visit {
+interface VisitWithId extends Visit {
   id: string;
-  propertyAddress: string;
-  datetime: Date;
-  status: string;
-  notes?: string;
-  agentName: string;
 }
 
 export const ClientVisits = () => {
   const { user } = useAuth();
-  const [visits, setVisits] = useState<Visit[]>([]);
+  const [visits, setVisits] = useState<VisitWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -24,15 +20,24 @@ export const ClientVisits = () => {
     try {
       const q = query(
         collection(db, 'visits'),
-        where('userId', '==', user.uid),
-        orderBy('datetime', 'desc')
+        where('clientId', '==', user.uid),
+        orderBy('date', 'desc')
       );
       const snapshot = await getDocs(q);
-      const visitsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        datetime: doc.data().datetime.toDate()
-      }));
+      const visitsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          propertyId: data.propertyId,
+          clientId: data.clientId,
+          agentId: data.agentId,
+          date: data.date.toDate(),
+          status: data.status,
+          notes: data.notes,
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+        } as VisitWithId;
+      });
       setVisits(visitsData);
     } catch (error) {
       console.error('Erreur lors de la récupération des visites:', error);
@@ -89,7 +94,7 @@ export const ClientVisits = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Adresse
+                      Propriété
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
@@ -100,42 +105,48 @@ export const ClientVisits = () => {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Statut
                     </th>
-                    <th scope="col" className="relative px-6 py-3">
-                      <span className="sr-only">Actions</span>
-                    </th>
+                    {visits.some(visit => visit.notes) && (
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Notes
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {visits.map((visit) => (
                     <tr key={visit.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {visit.propertyAddress}
+                        <a 
+                          href={`/property/${visit.propertyId}`}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          Voir la propriété
+                        </a>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {visit.datetime.toLocaleString('fr-CH')}
+                        {visit.date.toLocaleDateString('fr-CH')} à {visit.date.toLocaleTimeString('fr-CH')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {visit.agentName}
+                        Agent #{visit.agentId.slice(0, 8)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          visit.status === 'PENDING'
+                          visit.status === 'scheduled'
                             ? 'bg-yellow-100 text-yellow-800'
-                            : visit.status === 'COMPLETED'
+                            : visit.status === 'completed'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {visit.status}
+                          {visit.status === 'scheduled' ? 'Programmée'
+                            : visit.status === 'completed' ? 'Effectuée'
+                            : 'Annulée'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          className="text-indigo-600 hover:text-indigo-900"
-                          onClick={() => {/* Action pour voir les détails */}}
-                        >
-                          Détails
-                        </button>
-                      </td>
+                      {visits.some(v => v.notes) && (
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {visit.notes}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -144,8 +155,12 @@ export const ClientVisits = () => {
           </div>
         </div>
       </div>
+
+      {visits.length === 0 && (
+        <div className="mt-8 text-center text-gray-500">
+          Aucune visite programmée
+        </div>
+      )}
     </div>
   );
 };
-
-export default ClientVisits;
