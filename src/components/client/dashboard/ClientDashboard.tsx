@@ -1,131 +1,120 @@
 import React, { useState, useEffect } from 'react';
 import { Property, Visit, User, SearchCriteria } from '@/types';
-import { PropertyList } from '@/components/property/PropertyList';
+import PropertyList from '@/components/property/PropertyList';
 import { PropertySearch } from '@/components/property/PropertySearch';
 import { searchProperties } from '@/services/flatfox';
 import { useVisits } from '@/hooks/useVisits';
-import { matchPropertiesToCriteria, calculateMatchScore } from '@/services/matching';
+import { FilterBar } from '@/components/shared/FilterBar';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface ClientDashboardProps {
-  user: User;
-}
-
-export const ClientDashboard: React.FC<ClientDashboardProps> = ({ user }) => {
+export default function ClientDashboard() {
+  const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
-  const [searchCriteria, setSearchCriteria] = useState<Partial<SearchCriteria>>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [searchCriteria, setSearchCriteria] = useState<SearchCriteria | null>(null);
 
-  const { visits, loading: visitsLoading } = useVisits(user.id, 'client');
+  const { visits, loading: visitsLoading } = useVisits(user?.id || '', 'client');
 
-  const fetchProperties = async (criteria: Partial<SearchCriteria>) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Fetch properties from Flatfox API
-      const flatfoxProperties = await searchProperties({
-        location: criteria.location?.[0],
-        priceMin: criteria.minPrice,
-        priceMax: criteria.maxPrice,
-        rooms: criteria.minRooms,
-        propertyType: criteria.propertyType?.[0],
-      });
-
-      // Match and score properties based on criteria
-      const matchedProperties = matchPropertiesToCriteria(flatfoxProperties, criteria as SearchCriteria);
-      const scoredProperties = matchedProperties.map(property => ({
-        ...property,
-        matchScore: calculateMatchScore(property, criteria as SearchCriteria),
-      }));
-
-      // Sort by match score
-      scoredProperties.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-
-      setProperties(scoredProperties);
-    } catch (err: any) {
-      setError(err.message || 'Error fetching properties');
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = (criteria: Partial<SearchCriteria>) => {
-    setSearchCriteria(criteria);
-    fetchProperties(criteria);
-  };
-
-  // Initial fetch with empty criteria
   useEffect(() => {
-    fetchProperties({});
-  }, []);
+    const fetchProperties = async () => {
+      try {
+        const props = await searchProperties({
+          location: searchCriteria?.location || [],
+          priceMin: searchCriteria?.minPrice,
+          priceMax: searchCriteria?.maxPrice,
+          rooms: searchCriteria?.minRooms,
+          propertyType: searchCriteria?.propertyType?.[0],
+        });
+        setProperties(props);
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [searchCriteria]);
+
+  const handleSearch = (criteria: SearchCriteria) => {
+    setSearchCriteria(criteria);
+  };
+
+  if (loading || visitsLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left sidebar - Search filters */}
-        <div className="lg:col-span-1">
-          <h2 className="text-2xl font-bold mb-4">Search Properties</h2>
-          <PropertySearch onSearch={handleSearch} initialCriteria={searchCriteria} />
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Search Section */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Search Properties</h2>
+        <PropertySearch onSearch={handleSearch} />
+      </section>
 
-        {/* Main content - Property listings */}
-        <div className="lg:col-span-2">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Matching Properties</h2>
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Loading properties...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-red-500">{error}</p>
-              </div>
-            ) : (
-              <PropertyList
-                properties={properties}
-                showMatchScore={true}
-                userId={user.id}
-                userRole="client"
-              />
-            )}
-          </div>
+      {/* Filter Section */}
+      <section className="mb-8">
+        <FilterBar
+          total={properties.length}
+          onFilter={() => {/* Implement filter logic */}}
+          filters={[
+            { label: 'Price', options: ['Low to High', 'High to Low'] },
+            { label: 'Rooms', options: ['1+', '2+', '3+', '4+'] },
+            { label: 'Type', options: ['Apartment', 'House', 'Studio'] },
+          ]}
+        />
+      </section>
 
-          {/* Upcoming Visits */}
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Upcoming Visits</h2>
-            {visitsLoading ? (
-              <div className="text-center py-4">
-                <p className="text-gray-500">Loading visits...</p>
+      {/* Properties List */}
+      <section>
+        <h2 className="text-2xl font-bold mb-4">Available Properties</h2>
+        <PropertyList properties={properties} />
+      </section>
+
+      {/* Upcoming Visits */}
+      {visits.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-2xl font-bold mb-4">Your Upcoming Visits</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visits.slice(0, 3).map((visit) => (
+              <div
+                key={visit.id}
+                className="bg-white rounded-lg shadow-md p-6"
+              >
+                <div className="text-sm text-gray-500">
+                  {new Date(visit.date).toLocaleDateString()}
+                </div>
+                <div className="font-medium mt-1">
+                  Property Visit
+                </div>
+                <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  visit.status === 'scheduled'
+                    ? 'bg-green-100 text-green-800'
+                    : visit.status === 'cancelled'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {visit.status.charAt(0).toUpperCase() + visit.status.slice(1)}
+                </div>
               </div>
-            ) : visits.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-gray-500">No upcoming visits scheduled.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {visits.map((visit: Visit) => (
-                  <div
-                    key={visit.id}
-                    className="bg-white p-4 rounded-lg shadow flex justify-between items-center"
-                  >
-                    <div>
-                      <p className="font-medium">Visit on {new Date(visit.date).toLocaleDateString()}</p>
-                      <p className="text-gray-500">Status: {visit.status}</p>
-                    </div>
-                    {visit.notes && (
-                      <div className="text-sm text-gray-600">
-                        Notes: {visit.notes}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
-        </div>
-      </div>
+          {visits.length > 3 && (
+            <div className="mt-4">
+              <a
+                href="/visits"
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                View all visits ({visits.length})
+              </a>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
-};
+}
