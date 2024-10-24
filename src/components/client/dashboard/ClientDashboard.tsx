@@ -11,7 +11,7 @@ export default function ClientDashboard() {
   const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchCriteria, setSearchCriteria] = useState<SearchCriteria | null>(null);
+  const [searchCriteria, setSearchCriteria] = useState<Partial<SearchCriteria> | null>(null);
 
   const { visits, loading: visitsLoading } = useVisits(user?.id || '', 'client');
 
@@ -36,7 +36,7 @@ export default function ClientDashboard() {
     fetchProperties();
   }, [searchCriteria]);
 
-  const handleSearch = (criteria: SearchCriteria) => {
+  const handleSearch = (criteria: Partial<SearchCriteria>) => {
     setSearchCriteria(criteria);
   };
 
