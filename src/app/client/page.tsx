@@ -33,7 +33,7 @@ export default function ClientDashboard() {
       if (userData?.subscriptionEndDate) {
         const endDate = userData.subscriptionEndDate.toDate();
         const now = new Date();
-        const daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+        const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         setSubscriptionData({
           daysLeft,
           isActive: daysLeft > 0
