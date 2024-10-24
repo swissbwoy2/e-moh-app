@@ -14,10 +14,15 @@ import {
   Timestamp,
   getDocs
 } from 'firebase/firestore';
+import type { Message } from '@/types';
+
+interface MessageWithId extends Message {
+  id: string;
+}
 
 export default function Messages() {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<MessageWithId[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [contacts, setContacts] = useState<any[]>([]);
   const [selectedContact, setSelectedContact] = useState<any>(null);
@@ -67,8 +72,9 @@ export default function Messages() {
       const newMessages = snapshot.docs
         .map(doc => ({
           id: doc.id,
-          ...doc.data()
-        }))
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+        } as MessageWithId))
         .filter(msg => 
           msg.senderId === selectedContact.id || 
           msg.receiverId === selectedContact.id
@@ -157,7 +163,7 @@ export default function Messages() {
                       {message.content}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {message.createdAt.toDate().toLocaleTimeString()}
+                      {message.createdAt.toLocaleTimeString()}
                     </div>
                   </div>
                 ))}
