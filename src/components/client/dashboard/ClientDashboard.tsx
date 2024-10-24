@@ -4,7 +4,7 @@ import PropertyList from '@/components/property/PropertyList';
 import { PropertySearch } from '@/components/property/PropertySearch';
 import { searchProperties } from '@/services/flatfox';
 import { useVisits } from '@/hooks/useVisits';
-import { FilterBar } from '@/components/shared/FilterBar';
+import FilterBar from '@/components/shared/FilterBar';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ClientDashboard() {
