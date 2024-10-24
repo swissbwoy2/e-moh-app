@@ -2,10 +2,18 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../lib/firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
+import type { User } from '@/types';
+import type { SearchMandate } from '@/types/search-mandate';
+
+interface ClientWithSearchMandate extends User {
+  id: string;
+  searchCriteria?: SearchMandate;
+  status: 'active' | 'inactive';
+}
 
 export const ClientsList = () => {
   const { user } = useAuth();
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState<ClientWithSearchMandate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,9 +26,33 @@ export const ClientsList = () => {
           where('agentId', '==', user.uid)
         );
         const snapshot = await getDocs(clientsQuery);
-        const clientsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const clientsData = await Promise.all(snapshot.docs.map(async doc => {
+          const data = doc.data();
+          
+          // Fetch search mandate
+          const mandateQuery = query(
+            collection(db, 'search-mandates'),
+            where('userId', '==', doc.id)
+          );
+          const mandateSnapshot = await getDocs(mandateQuery);
+          const searchCriteria = mandateSnapshot.docs[0]?.data() as SearchMandate | undefined;
+
+          return {
+            id: doc.id,
+            uid: data.uid,
+            email: data.email,
+            role: data.role,
+            displayName: data.displayName,
+            photoURL: data.photoURL,
+            phone: data.phone,
+            address: data.address,
+            createdAt: data.createdAt.toDate(),
+            lastLogin: data.lastLogin.toDate(),
+            subscriptionStatus: data.subscriptionStatus,
+            subscriptionEndDate: data.subscriptionEndDate?.toDate(),
+            searchCriteria,
+            status: data.status || 'inactive'
+          } as ClientWithSearchMandate;
         }));
         setClients(clientsData);
       } catch (error) {
@@ -73,19 +105,27 @@ export const ClientsList = () => {
                   {clients.map((client) => (
                     <tr key={client.id}>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                        {client.firstName} {client.lastName}
+                        {client.displayName || client.email}
                       </td>
                       <td className="px-3 py-4 text-sm text-gray-500">
-                        {client.searchCriteria?.propertyType} - {client.searchCriteria?.rooms} pièces
+                        {client.searchCriteria ? (
+                          `${client.searchCriteria.propertyType} - ${client.searchCriteria.rooms} pièces`
+                        ) : (
+                          'Pas de critères de recherche'
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {client.searchCriteria?.maxBudget} CHF
+                        {client.searchCriteria ? (
+                          `${client.searchCriteria.maxBudget.toLocaleString()} CHF`
+                        ) : (
+                          '-'
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          client.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          client.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {client.status}
+                          {client.status === 'active' ? 'Actif' : 'Inactif'}
                         </span>
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -104,8 +144,12 @@ export const ClientsList = () => {
           </div>
         </div>
       </div>
+
+      {clients.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          Vous n'avez pas encore de clients assignés
+        </div>
+      )}
     </div>
   );
 };
-
-export default ClientsList;
