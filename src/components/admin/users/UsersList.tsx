@@ -15,13 +15,23 @@ export const UsersList = () => {
     const fetchUsers = async () => {
       try {
         const usersSnapshot = await getDocs(collection(db, 'users'));
-        const usersData: UserWithId[] = usersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt.toDate(),
-          lastLogin: doc.data().lastLogin.toDate(),
-          subscriptionEndDate: doc.data().subscriptionEndDate?.toDate(),
-        }));
+        const usersData = usersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            uid: data.uid,
+            email: data.email,
+            role: data.role,
+            displayName: data.displayName,
+            photoURL: data.photoURL,
+            phone: data.phone,
+            address: data.address,
+            createdAt: data.createdAt.toDate(),
+            lastLogin: data.lastLogin.toDate(),
+            subscriptionStatus: data.subscriptionStatus,
+            subscriptionEndDate: data.subscriptionEndDate?.toDate(),
+          } as UserWithId;
+        });
         setUsers(usersData);
       } catch (error) {
         console.error('Erreur lors de la récupération des utilisateurs:', error);
@@ -121,5 +131,3 @@ export const UsersList = () => {
     </div>
   );
 };
-
-export default UsersList;
