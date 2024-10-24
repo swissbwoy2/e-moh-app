@@ -5,6 +5,9 @@ import { Property } from '@/types';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { getPropertyDetails } from '@/services/flatfox';
+import { getFacebookListing } from '@/services/facebook';
+import { getHomegateDetails } from '@/services/homegate';
 
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [property, setProperty] = useState<Property | null>(null);
@@ -22,10 +25,10 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
         switch (source) {
           case 'flatfox':
-            propertyData = await getPropertyById(sourceId);
+            propertyData = await getPropertyDetails(sourceId);
             break;
           case 'facebook':
-            propertyData = await getMarketplaceListing(sourceId);
+            propertyData = await getFacebookListing(sourceId);
             break;
           case 'homegate':
             propertyData = await getHomegateDetails(sourceId);
