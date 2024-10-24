@@ -13,20 +13,14 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { useAuth } from './AuthContext';
-import type { Message as MessageType } from '@/types';
-
-interface Contact {
-  id: string;
-  name: string;
-  avatar?: string;
-}
+import type { Message as MessageType, User } from '@/types';
 
 interface MessagesContextType {
   messages: MessageType[];
-  contacts: Contact[];
+  contacts: User[];
   loading: boolean;
-  selectedContact: Contact | null;
-  setSelectedContact: (contact: Contact | null) => void;
+  selectedContact: User | null;
+  setSelectedContact: (contact: User | null) => void;
   sendMessage: (receiverId: string, content: string) => Promise<void>;
 }
 
@@ -34,9 +28,9 @@ const MessagesContext = createContext<MessagesContextType | undefined>(undefined
 
 export function MessagesProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<MessageType[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<User | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -46,13 +40,20 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('uid', '!=', user.uid));
       const snapshot = await getDocs(q);
-      const contactsList: Contact[] = [];
+      const contactsList: User[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
         contactsList.push({
           id: doc.id,
-          name: data.name || data.email,
-          avatar: data.avatar,
+          uid: data.uid,
+          email: data.email,
+          role: data.role,
+          displayName: data.displayName,
+          photoURL: data.photoURL,
+          createdAt: data.createdAt.toDate(),
+          lastLogin: data.lastLogin.toDate(),
+          subscriptionStatus: data.subscriptionStatus,
+          subscriptionEndDate: data.subscriptionEndDate?.toDate(),
         });
       });
       setContacts(contactsList);
@@ -68,7 +69,7 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
     const messagesRef = collection(db, 'messages');
     const q = query(
       messagesRef,
-      where('senderId', 'in', [user.uid, selectedContact?.id]),
+      where('senderId', 'in', [user.uid, selectedContact?.uid]),
       orderBy('timestamp', 'desc')
     );
 
