@@ -109,6 +109,16 @@ export const ChatSystem = () => {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="flex h-screen bg-gray-100 items-center justify-center">
+        <div className="text-gray-500">
+          Please login to access messages
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Clients list */}
