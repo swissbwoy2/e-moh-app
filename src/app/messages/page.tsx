@@ -89,7 +89,7 @@ export default function Messages() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedContact) return;
+    if (!newMessage.trim() || !selectedContact || !user) return;
 
     try {
       await addDoc(collection(db, 'messages'), {
@@ -150,12 +150,12 @@ export default function Messages() {
                   <div
                     key={message.id}
                     className={`mb-4 ${
-                      message.senderId === user.uid ? 'text-right' : 'text-left'
+                      message.senderId === user?.uid ? 'text-right' : 'text-left'
                     }`}
                   >
                     <div
                       className={`inline-block px-4 py-2 rounded-lg ${
-                        message.senderId === user.uid
+                        message.senderId === user?.uid
                           ? 'bg-indigo-600 text-white'
                           : 'bg-gray-100'
                       }`}
