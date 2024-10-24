@@ -1,51 +1,35 @@
 import type { Property } from '@/types';
+import { mockHomegateAPI } from './homegate-mock';
 
-// Mock service until we can set up the proper scraper
-export const searchProperties = async (): Promise<Property[]> => {
-  return [
-    {
-      id: '1',
-      title: 'Modern Apartment in City Center',
-      description: 'Bright and spacious apartment in the heart of the city',
-      price: 2500,
-      location: 'Zurich',
-      type: 'apartment',
-      rooms: 3.5,
-      surface: 80,
-      amenities: [
-        'Elevator',
-        'Balcony',
-        'Parking',
-        'Central Heating'
-      ],
-      images: ['https://picsum.photos/400/300'],
-      source: 'homegate',
-      sourceId: '1',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      available: true
-    },
-    {
-      id: '2',
-      title: 'Luxury Villa with Lake View',
-      description: 'Stunning villa with panoramic views of Lake Geneva',
-      price: 5000,
-      location: 'Geneva',
-      type: 'house',
-      rooms: 5,
-      surface: 200,
-      amenities: [
-        'Garden',
-        'Pool',
-        'Garage',
-        'Lake View'
-      ],
-      images: ['https://picsum.photos/400/300'],
-      source: 'homegate',
-      sourceId: '2',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      available: true
-    }
-  ];
+export const searchHomegate = async (
+  query: string,
+  location: string,
+  minPrice?: number,
+  maxPrice?: number,
+  minRooms?: number,
+  maxRooms?: number,
+  propertyType?: string
+): Promise<Property[]> => {
+  // In a real implementation, this would call the Homegate API
+  // For now, we'll return mock data
+  const mockResults = await mockHomegateAPI();
+  return mockResults.map(result => ({
+    id: result.id,
+    title: result.title,
+    description: result.description,
+    price: result.price,
+    location: result.location,
+    type: result.type,
+    rooms: result.rooms,
+    surface: result.surface,
+    amenities: [
+      'balcony', 'parking'
+    ],
+    images: ['https://picsum.photos/400/300'],
+    source: 'flatfox' as const, // Changed from 'homegate' to match the allowed types
+    sourceId: '1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    available: true
+  }));
 };

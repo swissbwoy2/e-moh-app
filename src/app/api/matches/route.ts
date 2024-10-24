@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { searchProperties } from '@/services/homegate';
+import { searchHomegate } from '@/services/homegate';
 
 interface SearchMandate {
   id: string;
   maxPrice: number;
   minRooms: number;
-  location: string;
+  region: string[];
   [key: string]: any;
 }
 
@@ -27,23 +27,37 @@ export async function GET() {
       ...doc.data()
     } as SearchMandate));
 
-    // Get available properties
-    const properties: Property[] = await searchProperties();
+    // Get unique locations from all mandates
+    const uniqueLocations = Array.from(new Set(mandates.flatMap(mandate => mandate.region)));
+    
+    // Create a promise for each unique location
+    const propertyPromises = uniqueLocations.map(location => 
+      searchHomegate('', location)
+    );
+
+    // Get available properties for all locations
+    const propertiesArrays = await Promise.all(propertyPromises);
+    const allProperties = propertiesArrays.flat();
 
     // Match properties with mandates
     const matches = mandates.map(mandate => {
-      const matchingProperties = properties.filter(property => {
+      const matchingProperties = allProperties.filter(property => {
         // Implement matching logic here based on mandate criteria
-        const priceMatch = property.price <= (mandate.maxPrice || Infinity);
-        const roomsMatch = property.rooms >= (mandate.minRooms || 0);
-        const locationMatch = !mandate.location || property.location.toLowerCase().includes(mandate.location.toLowerCase());
+        const priceMatch = property.price <= mandate.maxPrice;
+        const roomsMatch = property.rooms >= mandate.minRooms;
+        const locationMatch = mandate.region.some(region =>
+          property.location.toLowerCase().includes(region.toLowerCase())
+        );
 
         return priceMatch && roomsMatch && locationMatch;
       });
 
       return {
         mandateId: mandate.id,
-        properties: matchingProperties
+        properties: matchingProperties.map(property => ({
+          ...property,
+          matchScore: calculateMatchScore(property, mandate)
+        }))
       };
     });
 
@@ -52,4 +66,29 @@ export async function GET() {
     console.error('Error in matches route:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+function calculateMatchScore(property: Property, mandate: SearchMandate): number {
+  let score = 0;
+
+  // Price match (0-40 points)
+  const priceRatio = property.price / mandate.maxPrice;
+  if (priceRatio <= 1) {
+    score += 40 * (1 - priceRatio/2); // Better score for lower prices, but not too low
+  }
+
+  // Rooms match (0-30 points)
+  const minRooms = mandate.minRooms;
+  const roomsDiff = property.rooms - minRooms;
+  if (roomsDiff >= 0) {
+    score += 30 * (1 / (1 + roomsDiff)); // Perfect match gets full points, decreases with extra rooms
+  }
+
+  // Location match (0-30 points)
+  const locationScore = mandate.region.some(region => 
+    property.location.toLowerCase() === region.toLowerCase()
+  ) ? 30 : 15; // Exact match gets full points, partial match gets half
+  score += locationScore;
+
+  return Math.min(100, score); // Cap at 100
 }

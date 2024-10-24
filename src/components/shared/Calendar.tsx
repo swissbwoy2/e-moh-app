@@ -30,8 +30,18 @@ interface CalendarProps {
   onEventClick: (event: Event) => void;
 }
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
+function getColStartClass(dayOfWeek: number): string {
+  const colStartClasses = [
+    '',
+    'col-start-1',
+    'col-start-2',
+    'col-start-3',
+    'col-start-4',
+    'col-start-5',
+    'col-start-6',
+    'col-start-7',
+  ];
+  return colStartClasses[dayOfWeek] || '';
 }
 
 export default function Calendar({ events, onDateSelect, onEventClick }: CalendarProps) {
@@ -58,6 +68,43 @@ export default function Calendar({ events, onDateSelect, onEventClick }: Calenda
   const handleDayClick = (day: Date) => {
     setSelectedDay(day);
     onDateSelect(day);
+  };
+
+  const getDayClasses = (day: Date): string => {
+    return [
+      'w-full h-full flex flex-col items-center justify-center rounded-lg transition-colors',
+      isEqual(day, selectedDay) ? 'bg-primary-100' : '',
+      isToday(day) ? 'border-2 border-primary-500' : '',
+      !isEqual(day, selectedDay) && !isToday(day) && isSameMonth(day, firstDayCurrentMonth) ? 'hover:bg-gray-100' : '',
+      !isEqual(day, selectedDay) && !isToday(day) && !isSameMonth(day, firstDayCurrentMonth) ? 'text-gray-400' : '',
+    ].filter(Boolean).join(' ');
+  };
+
+  const getEventStatusClasses = (status: Event['status']): string => {
+    return [
+      'p-3 rounded-lg cursor-pointer transition-colors',
+      status === 'confirmed' ? 'bg-green-50 hover:bg-green-100' : '',
+      status === 'pending' ? 'bg-yellow-50 hover:bg-yellow-100' : '',
+      status === 'cancelled' ? 'bg-red-50 hover:bg-red-100' : '',
+    ].filter(Boolean).join(' ');
+  };
+
+  const getEventStatusBadgeClasses = (status: Event['status']): string => {
+    return [
+      'text-xs px-2 py-1 rounded-full',
+      status === 'confirmed' ? 'bg-green-100 text-green-800' : '',
+      status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '',
+      status === 'cancelled' ? 'bg-red-100 text-red-800' : '',
+    ].filter(Boolean).join(' ');
+  };
+
+  const getEventDotClasses = (status: Event['status']): string => {
+    return [
+      'w-2 h-2 rounded-full',
+      status === 'confirmed' ? 'bg-green-500' : '',
+      status === 'pending' ? 'bg-yellow-500' : '',
+      status === 'cancelled' ? 'bg-red-500' : '',
+    ].filter(Boolean).join(' ');
   };
 
   return (
@@ -101,22 +148,11 @@ export default function Calendar({ events, onDateSelect, onEventClick }: Calenda
           return (
             <div
               key={day.toString()}
-              className={classNames(
-                'aspect-square p-1',
-                dayIdx === 0 && colStartClasses[getDay(day)],
-                'relative'
-              )}
+              className={`aspect-square p-1 relative ${dayIdx === 0 ? getColStartClass(getDay(day)) : ''}`}
             >
               <button
                 onClick={() => handleDayClick(day)}
-                className={classNames(
-                  'w-full h-full flex flex-col items-center justify-center rounded-lg',
-                  isEqual(day, selectedDay) && 'bg-primary-100',
-                  isToday(day) && 'border-2 border-primary-500',
-                  !isEqual(day, selectedDay) && !isToday(day) && isSameMonth(day, firstDayCurrentMonth) && 'hover:bg-gray-100',
-                  !isEqual(day, selectedDay) && !isToday(day) && !isSameMonth(day, firstDayCurrentMonth) && 'text-gray-400',
-                  'transition-colors'
-                )}
+                className={getDayClasses(day)}
               >
                 <time dateTime={format(day, 'yyyy-MM-dd')} className="text-sm">
                   {format(day, 'd')}
@@ -130,12 +166,7 @@ export default function Calendar({ events, onDateSelect, onEventClick }: Calenda
                           e.stopPropagation();
                           onEventClick(event);
                         }}
-                        className={classNames(
-                          'w-2 h-2 rounded-full',
-                          event.status === 'confirmed' && 'bg-green-500',
-                          event.status === 'pending' && 'bg-yellow-500',
-                          event.status === 'cancelled' && 'bg-red-500'
-                        )}
+                        className={getEventDotClasses(event.status)}
                       />
                     ))}
                   </div>
@@ -146,7 +177,6 @@ export default function Calendar({ events, onDateSelect, onEventClick }: Calenda
         })}
       </div>
 
-      {/* Liste des événements du jour sélectionné */}
       <div className="mt-8">
         <h3 className="text-sm font-medium text-gray-900">
           Événements du {format(selectedDay, 'dd MMMM yyyy', { locale: fr })}
@@ -158,23 +188,11 @@ export default function Calendar({ events, onDateSelect, onEventClick }: Calenda
               <div
                 key={event.id}
                 onClick={() => onEventClick(event)}
-                className={classNames(
-                  'p-3 rounded-lg cursor-pointer transition-colors',
-                  event.status === 'confirmed' && 'bg-green-50 hover:bg-green-100',
-                  event.status === 'pending' && 'bg-yellow-50 hover:bg-yellow-100',
-                  event.status === 'cancelled' && 'bg-red-50 hover:bg-red-100'
-                )}
+                className={getEventStatusClasses(event.status)}
               >
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-gray-900">{event.title}</p>
-                  <span
-                    className={classNames(
-                      'text-xs px-2 py-1 rounded-full',
-                      event.status === 'confirmed' && 'bg-green-100 text-green-800',
-                      event.status === 'pending' && 'bg-yellow-100 text-yellow-800',
-                      event.status === 'cancelled' && 'bg-red-100 text-red-800'
-                    )}
-                  >
+                  <span className={getEventStatusBadgeClasses(event.status)}>
                     {event.status}
                   </span>
                 </div>
@@ -188,16 +206,5 @@ export default function Calendar({ events, onDateSelect, onEventClick }: Calenda
     </div>
   );
 }
-
-const colStartClasses = [
-  '',
-  'col-start-1',
-  'col-start-2',
-  'col-start-3',
-  'col-start-4',
-  'col-start-5',
-  'col-start-6',
-  'col-start-7',
-];
 
 export type { Event };

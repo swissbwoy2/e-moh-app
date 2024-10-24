@@ -22,9 +22,11 @@ const storage = getStorage(firebaseApp);
 
 // Configure Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-  prompt: 'select_account'
-});
+if (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+  googleProvider.setCustomParameters({
+    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+    prompt: 'select_account'
+  });
+}
 
 export { firebaseApp, auth, db, storage, googleProvider };

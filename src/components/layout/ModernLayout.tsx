@@ -37,10 +37,12 @@ const navigation = {
 
 export default function ModernLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, userRole, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const pathname = usePathname();
 
-  const currentNavigation = userRole ? navigation[userRole as keyof typeof navigation] : [];
+  // Get role from user object and map to navigation type
+  const userRole = user?.role?.toUpperCase() as keyof typeof navigation;
+  const currentNavigation = userRole ? navigation[userRole] : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,7 +164,7 @@ export default function ModernLayout({ children }: { children: React.ReactNode }
               {user && (
                 <button
                   onClick={() => signOut()}
-                  className="text-sm font-semibold leading-6 text-gray-900"
+                  className="text-sm font-semibold leading-6 text-gray-900 hover:text-primary-600 transition-colors"
                 >
                   Déconnexion
                 </button>

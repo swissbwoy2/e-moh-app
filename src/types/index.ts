@@ -1,3 +1,21 @@
+export interface UserSettings {
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  theme: 'light' | 'dark' | 'system';
+  language: 'en' | 'fr' | 'de' | 'it';
+  visitsReminders: boolean;
+  messagesDigest: 'instant' | 'daily' | 'weekly';
+  documentsExpiration: boolean;
+  propertyAlerts: boolean;
+  twoFactorAuth: boolean;
+  automaticMatching?: boolean;
+  matchingFrequency?: 'Immediately' | 'Daily' | 'Weekly';
+  workingDays?: 'Monday-Friday' | 'Monday-Saturday' | 'All Week';
+  autoResponder?: boolean;
+  automaticApproval?: boolean;
+  agentAssignmentMethod?: 'Round Robin' | 'Load Balanced' | 'Manual';
+}
+
 export interface User {
   id: string;
   uid: string;
@@ -11,6 +29,7 @@ export interface User {
   lastLogin: Date;
   subscriptionStatus?: 'active' | 'expired' | 'none';
   subscriptionEndDate?: Date;
+  settings?: UserSettings;
 }
 
 export interface Property {
@@ -93,4 +112,51 @@ export interface SearchCriteria {
   createdAt: Date;
   updatedAt: Date;
   active: boolean;
+}
+
+export interface PropertyMatch {
+  propertyId: string;
+  userId: string;
+  score: number;
+  matchReasons: string[];
+  status: 'pending' | 'viewed' | 'liked' | 'rejected';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PropertyStats {
+  totalViews: number;
+  uniqueViews: number;
+  favoriteCount: number;
+  inquiryCount: number;
+  visitRequestCount: number;
+  lastUpdated: Date;
+}
+
+export interface AgentStats {
+  activeClients: number;
+  totalVisits: number;
+  completedVisits: number;
+  successfulMatches: number;
+  responseRate: number;
+  averageResponseTime: number;
+  clientSatisfactionScore: number;
+  lastUpdated: Date;
+}
+
+export interface SystemSettings {
+  maintenanceMode: boolean;
+  registrationEnabled: boolean;
+  maxClientsPerAgent: number;
+  visitTimeSlotDuration: number;
+  propertyMatchingThreshold: number;
+  documentExpirationWarningDays: number;
+  subscriptionPeriodDays: number;
+  systemAnnouncement?: {
+    title: string;
+    message: string;
+    startDate: Date;
+    endDate: Date;
+    severity: 'info' | 'warning' | 'critical';
+  };
 }

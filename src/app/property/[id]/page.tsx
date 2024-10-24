@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPropertyById } from '@/services/flatfox';
 import { getMarketplaceListing } from '@/services/facebook';
-import { searchProperties } from '@/services/homegate';
+import { searchHomegate } from '@/services/homegate';
 
 export default function PropertyDetailPage({ params }: { params: { id: string } }) {
   const [property, setProperty] = useState<Property | null>(null);
@@ -31,7 +31,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
             propertyData = await getMarketplaceListing(sourceId);
             break;
           case 'homegate':
-            const properties = await searchProperties();
+            const properties = await searchHomegate('', '', undefined, undefined, undefined);
             propertyData = properties.find(p => p.id === sourceId);
             if (!propertyData) {
               throw new Error('Property not found');

@@ -10,7 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/config/firebase';
-import { User } from '@/types';
+import type { User } from '@/types';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -50,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (userDoc.exists()) {
             setUser({
               id: firebaseUser.uid,
+              uid: firebaseUser.uid,
               email: firebaseUser.email!,
               displayName: firebaseUser.displayName || undefined,
               photoURL: firebaseUser.photoURL || undefined,
@@ -69,12 +70,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Create new user document if it doesn't exist
             const newUser: User = {
               id: firebaseUser.uid,
+              uid: firebaseUser.uid,
               email: firebaseUser.email!,
               displayName: firebaseUser.displayName || undefined,
               photoURL: firebaseUser.photoURL || undefined,
               role: 'client',
               createdAt: new Date(),
               lastLogin: new Date(),
+              settings: {
+                emailNotifications: true,
+                pushNotifications: true,
+                theme: 'light',
+                language: 'fr',
+                visitsReminders: true,
+                messagesDigest: 'daily',
+                documentsExpiration: true,
+                propertyAlerts: true,
+                twoFactorAuth: false,
+              }
             };
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
             setUser(newUser);
@@ -110,12 +123,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const newUser: User = {
         id: result.user.uid,
+        uid: result.user.uid,
         email: result.user.email!,
         displayName: result.user.displayName || undefined,
         photoURL: result.user.photoURL || undefined,
         role: 'client',
         createdAt: new Date(),
         lastLogin: new Date(),
+        settings: {
+          emailNotifications: true,
+          pushNotifications: true,
+          theme: 'light',
+          language: 'fr',
+          visitsReminders: true,
+          messagesDigest: 'daily',
+          documentsExpiration: true,
+          propertyAlerts: true,
+          twoFactorAuth: false,
+        }
       };
       await setDoc(doc(db, 'users', result.user.uid), newUser);
     } catch (err: any) {

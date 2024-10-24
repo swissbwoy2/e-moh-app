@@ -2,16 +2,16 @@ import { Fragment } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, BellIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       router.push('/login');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);

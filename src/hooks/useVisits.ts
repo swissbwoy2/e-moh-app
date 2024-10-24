@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot,
+  addDoc,
+  doc,
+  updateDoc
+} from 'firebase/firestore';
 import { Visit } from '../types';
 
 export const useVisits = (userId: string, role: 'agent' | 'client') => {
@@ -21,6 +30,9 @@ export const useVisits = (userId: string, role: 'agent' | 'client') => {
         const visitsList = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
+          date: doc.data().date.toDate(),
+          createdAt: doc.data().createdAt.toDate(),
+          updatedAt: doc.data().updatedAt.toDate(),
         })) as Visit[];
 
         setVisits(visitsList);

@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function Sidebar() {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
 
   const adminLinks = [
     { name: 'Dashboard', href: '/admin', icon: HomeIcon },
@@ -31,7 +31,8 @@ export default function Sidebar() {
     { name: 'Messages', href: '/client/messages', icon: ChatBubbleLeftRightIcon },
   ];
 
-  const links = role === 'ADMIN' ? adminLinks : role === 'AGENT' ? agentLinks : clientLinks;
+  const userRole = user?.role?.toUpperCase();
+  const links = userRole === 'ADMIN' ? adminLinks : userRole === 'AGENT' ? agentLinks : clientLinks;
 
   return (
     <div className="flex flex-col w-64 bg-white shadow">

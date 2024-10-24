@@ -107,6 +107,8 @@ export const SidebarMenu: React.FC = () => {
     ? [...commonMenuItems, ...adminMenuItems]
     : commonMenuItems;
 
+  const userRole = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
+
   return (
     <div className="h-screen bg-white w-64 flex flex-col border-r border-gray-200">
       <div className="p-4">
@@ -156,9 +158,7 @@ export const SidebarMenu: React.FC = () => {
             <p className="text-sm font-medium text-gray-700">
               {user?.displayName || user?.email}
             </p>
-            <p className="text-xs text-gray-500">
-              {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
-            </p>
+            <p className="text-xs text-gray-500">{userRole}</p>
           </div>
           <button
             onClick={() => signOut()}

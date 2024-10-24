@@ -15,7 +15,7 @@ interface SettingsField {
   label: string;
   type: 'text' | 'email' | 'password' | 'select' | 'toggle';
   options?: string[];
-  value?: string | boolean;
+  value?: any;
 }
 
 export const UserSettings: React.FC = () => {
@@ -235,7 +235,7 @@ export const UserSettings: React.FC = () => {
                       <select
                         id={field.id}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        value={field.value}
+                        value={String(field.value)}
                         onChange={(e) =>
                           handleSettingChange(section.id, field.id, e.target.value)
                         }
@@ -252,7 +252,7 @@ export const UserSettings: React.FC = () => {
                         type={field.type}
                         id={field.id}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        value={field.value as string}
+                        value={String(field.value)}
                         onChange={(e) =>
                           handleSettingChange(section.id, field.id, e.target.value)
                         }

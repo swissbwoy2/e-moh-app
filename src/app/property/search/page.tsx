@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import PropertyList from '@/components/property/PropertyList';
 import PropertyFilters from '@/components/property/PropertyFilters';
-import { searchProperties } from '@/services/homegate';
+import { searchHomegate } from '@/services/homegate';
 import { Property } from '@/types';
 
 interface SearchFilters {
@@ -24,23 +24,17 @@ export default function PropertySearchPage() {
     try {
       setLoading(true);
       setError(null);
-      const results = await searchProperties();
-      
-      // Filter results based on search criteria
-      const filteredResults = results.filter(property => {
-        const matchLocation = !filters.location || 
-          property.location.toLowerCase().includes(filters.location.toLowerCase());
-        const matchMinPrice = !filters.minPrice || property.price >= filters.minPrice;
-        const matchMaxPrice = !filters.maxPrice || property.price <= filters.maxPrice;
-        const matchRooms = !filters.minRooms || property.rooms >= filters.minRooms;
-        const matchType = !filters.propertyType || 
-          property.type === filters.propertyType;
+      const results = await searchHomegate(
+        '', // query
+        filters.location || '',
+        filters.minPrice,
+        filters.maxPrice,
+        filters.minRooms,
+        undefined, // maxRooms
+        filters.propertyType
+      );
 
-        return matchLocation && matchMinPrice && matchMaxPrice && 
-               matchRooms && matchType;
-      });
-
-      setProperties(filteredResults);
+      setProperties(results);
     } catch (err) {
       console.error('Error searching properties:', err);
       setError('Failed to search properties. Please try again.');

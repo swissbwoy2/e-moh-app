@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { createMandate } from '@/lib/mandate';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -43,6 +44,7 @@ export const RegisterForm = () => {
     monthlyIncome: '',
     employmentStartDate: '',
     usageType: 'Principal',
+    userId: user?.uid || '',
   });
 
   // Files for upload
@@ -101,8 +103,18 @@ export const RegisterForm = () => {
             throw new Error('Please upload all required documents');
           }
           
+          if (!user?.uid) {
+            throw new Error('User not authenticated');
+          }
+
+          // Update userInfo with current user ID
+          const updatedUserInfo = {
+            ...userInfo,
+            userId: user.uid
+          };
+          
           // Create mandate document in Firestore
-          await createMandate(userInfo, files);
+          await createMandate(updatedUserInfo, files);
           
           // Proceed to payment
           router.push('/register/payment');
