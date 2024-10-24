@@ -4,7 +4,7 @@ import { db } from '../../../lib/firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Calendar, DateLocalizer, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import frCH from 'date-fns/locale/fr-CH';
+import { frCH } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 interface Visit {
