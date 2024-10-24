@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 
 export default function Messages() {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [contacts, setContacts] = useState<any[]>([]);
@@ -28,14 +28,19 @@ export default function Messages() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Fetch contacts based on role
+  // Fetch contacts based on user's role
   useEffect(() => {
     const fetchContacts = async () => {
       if (!user) return;
       
+      const userQuery = query(collection(db, 'users'), where('uid', '==', user.uid));
+      const userSnapshot = await getDocs(userQuery);
+      const userData = userSnapshot.docs[0]?.data();
+      const userRole = userData?.role;
+      
       const q = query(
         collection(db, 'users'),
-        where('role', '==', userRole === 'CLIENT' ? 'AGENT' : 'CLIENT')
+        where('role', '==', userRole === 'client' ? 'agent' : 'client')
       );
       
       const snapshot = await getDocs(q);
@@ -46,7 +51,7 @@ export default function Messages() {
     };
 
     fetchContacts();
-  }, [user, userRole]);
+  }, [user]);
 
   // Listen to messages in real-time
   useEffect(() => {
