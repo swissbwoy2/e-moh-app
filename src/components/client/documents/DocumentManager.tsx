@@ -10,13 +10,14 @@ interface DocumentWithId extends Document {
 }
 
 const REQUIRED_DOCUMENTS = [
-  { type: 'salary', label: 'Fiches de salaire (3 derniers mois)', required: true },
-  { type: 'id', label: 'Pièce d\'identité', required: true },
-  { type: 'debt', label: 'Extrait de l\'office des poursuites', required: true },
-  { type: 'residence', label: 'Attestation de domicile', required: false },
-  { type: 'employer', label: 'Attestation de l\'employeur', required: false },
-  { type: 'insurance', label: 'RC-ménage', required: false }
-] as const;
+  { type: 'salary' as const, label: 'Fiches de salaire (3 derniers mois)', required: true },
+  { type: 'id' as const, label: 'Pièce d\'identité', required: true },
+  { type: 'permit' as const, label: 'Permis de séjour', required: true },
+  { type: 'debt' as const, label: 'Extrait de l\'office des poursuites', required: true },
+  { type: 'residence' as const, label: 'Attestation de domicile', required: false },
+  { type: 'employment' as const, label: 'Attestation de l\'employeur', required: false },
+  { type: 'insurance' as const, label: 'RC-ménage', required: false }
+];
 
 export const DocumentManager = () => {
   const { user } = useAuth();
