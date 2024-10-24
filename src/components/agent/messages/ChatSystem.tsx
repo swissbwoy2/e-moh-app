@@ -2,14 +2,29 @@ import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
+import type { User } from '@/types';
+
+interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: Date;
+  read: boolean;
+}
+
+interface Client extends User {
+  id: string;
+}
 
 export const ChatSystem = () => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState([]);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [clients, setClients] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -18,17 +33,30 @@ export const ChatSystem = () => {
   useEffect(() => {
     if (!user) return;
 
-    // Récupérer la liste des clients
+    // Fetch clients list
     const clientsQuery = query(
       collection(db, 'users'),
       where('agentId', '==', user.uid)
     );
 
     const unsubscribeClients = onSnapshot(clientsQuery, (snapshot) => {
-      const clientsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const clientsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          uid: data.uid,
+          email: data.email,
+          role: data.role,
+          displayName: data.displayName,
+          photoURL: data.photoURL,
+          phone: data.phone,
+          address: data.address,
+          createdAt: data.createdAt.toDate(),
+          lastLogin: data.lastLogin.toDate(),
+          subscriptionStatus: data.subscriptionStatus,
+          subscriptionEndDate: data.subscriptionEndDate?.toDate(),
+        } as Client;
+      });
       setClients(clientsData);
     });
 
@@ -36,9 +64,9 @@ export const ChatSystem = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!selectedClient) return;
+    if (!selectedClient || !user) return;
 
-    // Écouter les messages en temps réel
+    // Listen for messages in real-time
     const messagesQuery = query(
       collection(db, 'messages'),
       where('conversationId', '==', `${user.uid}_${selectedClient.id}`),
@@ -46,10 +74,14 @@ export const ChatSystem = () => {
     );
 
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-      const messagesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const messagesData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          timestamp: data.timestamp?.toDate() || new Date(),
+        } as Message;
+      });
       setMessages(messagesData);
       scrollToBottom();
     });
@@ -57,9 +89,9 @@ export const ChatSystem = () => {
     return () => unsubscribe();
   }, [selectedClient, user]);
 
-  const sendMessage = async (e) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedClient) return;
+    if (!newMessage.trim() || !selectedClient || !user) return;
 
     try {
       await addDoc(collection(db, 'messages'), {
@@ -79,7 +111,7 @@ export const ChatSystem = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Liste des clients */}
+      {/* Clients list */}
       <div className="w-1/4 bg-white border-r border-gray-200">
         <div className="p-4">
           <h2 className="text-lg font-semibold text-gray-900">Conversations</h2>
@@ -94,24 +126,30 @@ export const ChatSystem = () => {
               }`}
             >
               <div className="font-medium text-gray-900">
-                {client.firstName} {client.lastName}
+                {client.displayName || client.email}
               </div>
               <div className="text-sm text-gray-500">
                 {client.email}
               </div>
             </div>
           ))}
+
+          {clients.length === 0 && (
+            <div className="p-4 text-gray-500 text-center">
+              Pas de clients assignés
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Zone de chat */}
+      {/* Chat area */}
       <div className="flex-1 flex flex-col">
         {selectedClient ? (
           <>
-            {/* En-tête */}
+            {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-white">
               <h3 className="text-lg font-medium text-gray-900">
-                {selectedClient.firstName} {selectedClient.lastName}
+                {selectedClient.displayName || selectedClient.email}
               </h3>
             </div>
 
@@ -131,14 +169,19 @@ export const ChatSystem = () => {
                         : 'bg-gray-100 text-gray-900'
                     }`}
                   >
-                    {message.content}
+                    <div>{message.content}</div>
+                    <div className={`text-xs mt-1 ${
+                      message.senderId === user.uid ? 'text-indigo-200' : 'text-gray-500'
+                    }`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
                 </div>
               ))}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Zone de saisie */}
+            {/* Input area */}
             <form onSubmit={sendMessage} className="p-4 bg-white border-t border-gray-200">
               <div className="flex space-x-3">
                 <input
@@ -150,7 +193,8 @@ export const ChatSystem = () => {
                 />
                 <button
                   type="submit"
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={!newMessage.trim()}
+                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Envoyer
                 </button>
@@ -166,5 +210,3 @@ export const ChatSystem = () => {
     </div>
   );
 };
-
-export default ChatSystem;
