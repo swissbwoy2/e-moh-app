@@ -7,6 +7,36 @@ import { useVisits } from '@/hooks/useVisits';
 import FilterBar from '@/components/shared/FilterBar';
 import { useAuth } from '@/contexts/AuthContext';
 
+const PRICE_OPTIONS = [
+  { value: 'low-to-high', label: 'Low to High', checked: false },
+  { value: 'high-to-low', label: 'High to Low', checked: false },
+];
+
+const ROOM_OPTIONS = [
+  { value: '1+', label: '1+ Rooms', checked: false },
+  { value: '2+', label: '2+ Rooms', checked: false },
+  { value: '3+', label: '3+ Rooms', checked: false },
+  { value: '4+', label: '4+ Rooms', checked: false },
+];
+
+const TYPE_OPTIONS = [
+  { value: 'apartment', label: 'Apartment', checked: false },
+  { value: 'house', label: 'House', checked: false },
+  { value: 'studio', label: 'Studio', checked: false },
+];
+
+const SORT_OPTIONS = [
+  { name: 'Price: Low to High', value: 'price-asc' },
+  { name: 'Price: High to Low', value: 'price-desc' },
+  { name: 'Newest', value: 'newest' },
+];
+
+const FILTER_SECTIONS = [
+  { id: 'price', name: 'Price', options: PRICE_OPTIONS },
+  { id: 'rooms', name: 'Rooms', options: ROOM_OPTIONS },
+  { id: 'type', name: 'Type', options: TYPE_OPTIONS },
+];
+
 export default function ClientDashboard() {
   const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
@@ -40,6 +70,16 @@ export default function ClientDashboard() {
     setSearchCriteria(criteria);
   };
 
+  const handleFilterChange = (sectionId: string, value: string) => {
+    // Implement filter logic
+    console.log('Filter changed:', sectionId, value);
+  };
+
+  const handleSortChange = (value: string) => {
+    // Implement sort logic
+    console.log('Sort changed:', value);
+  };
+
   if (loading || visitsLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -59,13 +99,10 @@ export default function ClientDashboard() {
       {/* Filter Section */}
       <section className="mb-8">
         <FilterBar
-          total={properties.length}
-          onFilter={() => {/* Implement filter logic */}}
-          filters={[
-            { label: 'Price', options: ['Low to High', 'High to Low'] },
-            { label: 'Rooms', options: ['1+', '2+', '3+', '4+'] },
-            { label: 'Type', options: ['Apartment', 'House', 'Studio'] },
-          ]}
+          filters={FILTER_SECTIONS}
+          sortOptions={SORT_OPTIONS}
+          onFilterChange={handleFilterChange}
+          onSortChange={handleSortChange}
         />
       </section>
 
