@@ -19,7 +19,7 @@ export default function ClientDashboard() {
     const fetchProperties = async () => {
       try {
         const props = await searchProperties({
-          location: searchCriteria?.location || [],
+          location: searchCriteria?.location?.[0],
           priceMin: searchCriteria?.minPrice,
           priceMax: searchCriteria?.maxPrice,
           rooms: searchCriteria?.minRooms,
