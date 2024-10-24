@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Calendar, DateLocalizer, dateFnsLocalizer } from 'react-big-calendar';
@@ -11,14 +11,15 @@ interface Visit {
   id: string;
   propertyAddress: string;
   clientName: string;
-  datetime: Date;
+  datetime: Timestamp;
   status: 'pending' | 'completed' | 'cancelled';
 }
 
-interface CalendarEvent extends Visit {
+interface CalendarEvent extends Omit<Visit, 'datetime'> {
   title: string;
   start: Date;
   end: Date;
+  datetime: Date;
 }
 
 const locales = {
