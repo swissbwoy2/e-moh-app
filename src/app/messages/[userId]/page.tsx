@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { ChatWindow } from '@/components/messages/ChatWindow';
 import { useMessages } from '@/contexts/MessagesContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function MessagePage({ params }: { params: { userId: string } }) {
   const {
@@ -13,6 +15,7 @@ export default function MessagePage({ params }: { params: { userId: string } }) 
     selectedContact,
     setSelectedContact,
   } = useMessages();
+  const { user } = useAuth();
 
   // Set selected contact based on URL parameter
   useEffect(() => {
