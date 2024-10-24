@@ -8,6 +8,7 @@ import {
   getDocs,
   query,
   where,
+  updateDoc,
 } from 'firebase/firestore';
 
 export async function POST(request: Request) {
@@ -102,7 +103,7 @@ export async function PUT(request: Request) {
 
     const visitData = visitDoc.data();
 
-    await visitDoc.ref.update({
+    await updateDoc(visitRef, {
       status,
       date: date || visitData.date,
       notes: notes || visitData.notes,
