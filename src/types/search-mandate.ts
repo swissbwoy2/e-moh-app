@@ -1,4 +1,5 @@
 export interface SearchMandate {
+  id?: string;
   // Personal Information
   email: string;
   firstName: string;
