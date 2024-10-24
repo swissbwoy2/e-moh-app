@@ -45,6 +45,12 @@ export default function MessagePage({ params }: { params: { userId: string } }) 
     );
   }
 
+  const handleSendMessage = (content: string) => {
+    if (selectedContact) {
+      sendMessage(selectedContact.uid, content);
+    }
+  };
+
   return (
     <Layout>
       <div className="flex flex-col h-full">
@@ -52,7 +58,7 @@ export default function MessagePage({ params }: { params: { userId: string } }) 
           messages={messages}
           contact={selectedContact}
           currentUser={user!}
-          onSendMessage={sendMessage}
+          onSendMessage={handleSendMessage}
         />
       </div>
     </Layout>
