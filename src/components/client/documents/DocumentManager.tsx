@@ -3,19 +3,24 @@ import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc } 
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../../../lib/firebase/config';
 import { useAuth } from '../../../contexts/AuthContext';
+import type { Document } from '@/types';
+
+interface DocumentWithId extends Document {
+  id: string;
+}
 
 const REQUIRED_DOCUMENTS = [
-  { type: 'SALARY', label: 'Fiches de salaire (3 derniers mois)', required: true },
-  { type: 'ID', label: 'Pièce d\'identité', required: true },
-  { type: 'DEBT', label: 'Extrait de l\'office des poursuites', required: true },
-  { type: 'RESIDENCE', label: 'Attestation de domicile', required: false },
-  { type: 'EMPLOYER', label: 'Attestation de l\'employeur', required: false },
-  { type: 'INSURANCE', label: 'RC-ménage', required: false }
-];
+  { type: 'salary', label: 'Fiches de salaire (3 derniers mois)', required: true },
+  { type: 'id', label: 'Pièce d\'identité', required: true },
+  { type: 'debt', label: 'Extrait de l\'office des poursuites', required: true },
+  { type: 'residence', label: 'Attestation de domicile', required: false },
+  { type: 'employer', label: 'Attestation de l\'employeur', required: false },
+  { type: 'insurance', label: 'RC-ménage', required: false }
+] as const;
 
 export const DocumentManager = () => {
   const { user } = useAuth();
-  const [documents, setDocuments] = useState([]);
+  const [documents, setDocuments] = useState<DocumentWithId[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,10 +33,13 @@ export const DocumentManager = () => {
         where('userId', '==', user.uid)
       );
       const snapshot = await getDocs(q);
-      const docs = snapshot.docs.map(doc => ({
+      const docs: DocumentWithId[] = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
-      }));
+        ...doc.data(),
+        createdAt: doc.data().createdAt.toDate(),
+        updatedAt: doc.data().updatedAt.toDate(),
+        validUntil: doc.data().validUntil?.toDate(),
+      } as DocumentWithId));
       setDocuments(docs);
     } catch (error) {
       console.error('Erreur lors de la récupération des documents:', error);
@@ -43,37 +51,38 @@ export const DocumentManager = () => {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  const handleFileUpload = async (type: string, file: File) => {
+  const handleFileUpload = async (docType: Document['type'], file: File) => {
     if (!user) return;
 
     try {
       setUploading(true);
       setError('');
 
-      // Créer une référence dans le storage
-      const fileRef = ref(storage, `documents/${user.uid}/${type}_${Date.now()}`);
+      // Create storage reference
+      const fileRef = ref(storage, `documents/${user.uid}/${docType}_${Date.now()}`);
       
-      // Upload du fichier
+      // Upload file
       await uploadBytes(fileRef, file);
       const url = await getDownloadURL(fileRef);
 
-      // Vérifier si un document de ce type existe déjà
-      const existingDoc = documents.find(doc => doc.type === type);
+      // Check if document of this type already exists
+      const existingDoc = documents.find(doc => doc.type === docType);
 
       if (existingDoc) {
-        // Mettre à jour le document existant
+        // Update existing document
         await updateDoc(doc(db, 'documents', existingDoc.id), {
           url,
           updatedAt: new Date(),
-          status: 'PENDING'
+          status: 'pending'
         });
       } else {
-        // Créer un nouveau document
+        // Create new document
         await addDoc(collection(db, 'documents'), {
           userId: user.uid,
-          type,
+          type: docType,
           url,
-          status: 'PENDING',
+          name: file.name,
+          status: 'pending',
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -88,9 +97,9 @@ export const DocumentManager = () => {
     }
   };
 
-  const getDocumentStatus = (type: string) => {
+  const getDocumentStatus = (type: Document['type']) => {
     const doc = documents.find(d => d.type === type);
-    return doc?.status || 'MISSING';
+    return doc?.status || 'missing';
   };
 
   return (
@@ -135,10 +144,12 @@ export const DocumentManager = () => {
                   {docType.required && <span className="text-red-500">*</span>}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {getDocumentStatus(docType.type) === 'MISSING' ? (
+                  {getDocumentStatus(docType.type) === 'missing' ? (
                     'Non fourni'
-                  ) : getDocumentStatus(docType.type) === 'PENDING' ? (
+                  ) : getDocumentStatus(docType.type) === 'pending' ? (
                     'En attente de validation'
+                  ) : getDocumentStatus(docType.type) === 'rejected' ? (
+                    'Rejeté'
                   ) : (
                     'Validé'
                   )}
@@ -174,5 +185,3 @@ export const DocumentManager = () => {
     </div>
   );
 };
-
-export default DocumentManager;
