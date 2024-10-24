@@ -11,7 +11,7 @@ export default function VisitsPage() {
   const { user } = useAuth();
   const { visits, loading, error, updateVisitStatus, addVisitNotes } = useVisits(
     user?.id || '',
-    user?.role || 'client'
+    (user?.role === 'agent' || user?.role === 'client') ? user.role : 'client'
   );
   const [editingVisit, setEditingVisit] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
